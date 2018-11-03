@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+<style>
+body, html {
+    height: 100%;
+}
+
+.bg {
+    background-image: url("https://impossible.works/content/3-opinion-works/201809180900-rekor-ependisewn-fintech/1_xp1aew5otkrforuk-5btmw.png");
+    height: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.navbar{
+    background-color: rgba(0, 8, 46, 0.5);
+}
+
+h1 {
+    left: 0;
+    line-height: 200px;
+    margin: auto;
+    margin-top: -100px;
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    color: rgb(255, 255, 255);
+    text-shadow: 2px 2px 10px black;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg">
+    <h1 class="display-4 text-center">What can I help you with today?</h1>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+<style>
+
+.navbar{
+    background-color: rgba(0, 8, 46, 0.5);
+}
+
+#videoContainer {
+    margin: 0px auto;
+    width: 600px;
+    height: 480px;
+    border: 10px #333 solid;
+}
+
+#videoElement {
+    width: 600px;
+    height: 480px;
+}
+
+#canvas {
+    border: 10px #333 solid;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <div id="videoContainer">
+                <video autoplay="true" id="videoElement">
+                </video>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <button id="snap">Snap Photo</button>
+            <canvas id="canvas" width="640" height="480"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function(){
+    var video = document.querySelector("#videoElement");
+ 
+    if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({video: true})
+            .then(function(stream) {
+                video.srcObject = stream;
+            }).catch(function(error) {
+                console.log("Video error!");
+            });
+    }
+ 
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+    var csrftoken = getCookie('csrftoken');
+
+    // Take photo button
+    document.getElementById("snap").addEventListener("click", function() {
+        context.drawImage(video, 0, 0, 640, 480);
+        console.log(canvas.toDataURL());
+        $.ajax({
+            method: 'POST',
+            url: '/uploadImage',
+            headers: {'X-CSRFToken':csrftoken},
+            data: {'image':canvas.toDataURL()}
+        }).done(function(msg){
+            console.log('[done]'+msg);
+        }).fail(function(msg){
+            console.log('[fail]'+msg);
+        });
+    });
+});
+</script>
+{% endblock %}
