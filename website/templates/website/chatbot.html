@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+<style>
+.navbar{
+    background-color: rgba(0, 8, 46, 0.5);
+}
+
+body,html {
+    height: 100%;
+}
+
+.chat-container {
+    margin: 0px;
+    padding: px;
+}
+
+.chat-message {
+    padding: 6px;
+    border-radius: 3px;
+    margin-bottom: 3px;
+}
+
+.bot-message {
+    background: green;
+    color: white;
+}
+
+.human-message {
+    background: dodgerblue;
+    color: white;
+    margin: 13px 1px;
+}
+
+.input {
+    width: 100%;
+    margin: 35px 0px;
+    height: 60px;
+    border: 1px solid rosybrown;
+    border-radius: 3px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container h-100">
+        <div class="row align-items-center h-100">
+            <div class="col-md-8 col-sm-12 mx-auto">
+                <div class="h-100 justify-content-center">
+                    <div class="chat-container" style="overflow: auto; max-height: 80vh">
+                        <!-- chat messages -->
+                    </div>
+                    <form id="target">
+                       <input class="input" type="text" value="" placeholder="Enter message..." id="input_message"/>
+                       <input type="submit" hidden>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function submit_message(message) {
+        $.post( "/send_message", {message: message}, handle_response);
+
+        function handle_response(data) {
+          console.log(data);
+          console.log(data.message);
+          data.message.forEach(messageObj => {
+            $('.chat-container').append(`
+                <div class="chat-message col-md-5 offset-md-7 bot-message">
+                    ${messageObj.text.text}
+                </div>
+          `)
+          });
+          // append the bot repsonse to the div
+          
+          // remove the loading indicator
+          $( "#loading" ).remove();
+        }
+    }
+
+$('#target').on('submit', function(e){
+        e.preventDefault();
+        const input_message = $('#input_message').val()
+        // return if the user does not enter any text
+        if (!input_message) {
+          return
+        }
+
+        $('.chat-container').append(`
+            <div class="chat-message col-md-5 human-message">
+                ${input_message}
+            </div>
+        `)
+
+        // loading 
+        $('.chat-container').append(`
+            <div class="chat-message text-center col-md-2 offset-md-10 bot-message" id="loading">
+                <b>...</b>
+            </div>
+        `)
+
+        // clear the text input 
+        $('#input_message').val('')
+
+        // send the message
+        submit_message(input_message)
+    });
+</script>
+{% endblock %}
