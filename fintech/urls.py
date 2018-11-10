@@ -21,4 +21,7 @@ urlpatterns = [
 
     # main entry
     path('', include('website.urls')),
+
+    # bitcoin
+    path('bitcoin/', include('bitcoin.urls')),
 ]
