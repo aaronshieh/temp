@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+<style>
+
+.navbar{
+    background-color: rgba(0, 8, 46, 0.5);
+}
+
+#videoContainer {
+    margin: 0px auto;
+    width: 660px;
+    height: 500px;
+    border: 10px #333 solid;
+}
+
+#videoElement {
+    width: 640px;
+    height: 480px;
+}
+
+#canvas {
+    border: 0px #333 solid;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <br>
+    <div class="row">
+        <div class="col">
+            <div id="videoContainer">
+                <video autoplay="true" id="videoElement">
+                </video>
+                <canvas id="canvas" width="0" height="0"></canvas>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="row">
+        <div class="col-12 text-center">
+            <button id="snap" class="btn btn-primary">LOGIN</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function(){
+    var video = $("#videoElement");
+ 
+    if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({video: true})
+            .then(function(stream) {
+                video[0].srcObject = stream;
+                let {width, height} = stream.getTracks()[0].getSettings();
+                console.log(`Streaming video at: ${width}x${height}`); // 640x480
+            }).catch(function(error) {
+                console.log("Video error!");
+            });
+    }
+ 
+    var canvas = $('#canvas');
+    canvas.hide();
+    var context = canvas[0].getContext('2d');
+    // var csrftoken = getCookie('csrftoken');
+
+    function drawFace(msg){
+        video.hide();
+        canvas.show();
+        var ctx=canvas[0].getContext("2d");
+        ctx.rect(msg.startX, msg.startY, msg.endX-msg.startX, msg.endY-msg.startY);
+        ctx.lineWidth="3";
+        ctx.strokeStyle="yellow";
+        ctx.stroke();
+
+        // TODO: do this without setTimeout
+        t = setTimeout(function(){
+            if(msg.name == 'Unknown'){
+            alert("Unknown face detected, try again!");
+            video.show();
+            canvas.hide();
+            } else {
+                alert(`Welcome ${msg.name}!`);
+            }
+        }, 1000);
+    }
+
+    // Login button
+    document.getElementById("snap").addEventListener("click", function() {
+        canvas.attr("width", "640");
+        canvas.attr("height", "480");
+        context.drawImage(video[0], 0, 0, 640, 480);
+        
+        // upload image
+        $.ajax({
+            method: 'POST',
+            url: '/uploadImage',
+            // headers: {'X-CSRFToken':csrftoken},
+            data: {'image':canvas[0].toDataURL()}
+        }).done(function(msg){
+            console.log('[done]:', msg);
+            $.ajax({
+                method: 'GET',
+                url: '/face_utils/identify_face',
+            }).done(function(msg){
+
+                // draw bounding box
+                console.log(msg);
+                drawFace(msg);
+
+            }).fail(function(msg){
+                console.log('[fail]:', msg);
+            });
+        }).fail(function(msg){
+            console.log('[fail]:', msg);
+        });
+    });
+});
+</script>
+{% endblock %}

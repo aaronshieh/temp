@@ -24,4 +24,10 @@ urlpatterns = [
 
     # bitcoin
     path('bitcoin/', include('bitcoin.urls')),
+
+    # bank
+    path('bank/', include('bank.urls')),
+
+    # face_utils
+    path('face_utils/', include('face_utils.urls')),
 ]

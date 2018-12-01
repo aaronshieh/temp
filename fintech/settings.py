@@ -38,9 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # website
     'website',
     'bitcoin',
+    'bank',
+    'face_utils',
 ]
 
 MIDDLEWARE = [
