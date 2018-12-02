@@ -73,8 +73,12 @@ $(function(){
         canvas.show();
         var ctx=canvas[0].getContext("2d");
         ctx.rect(msg.startX, msg.startY, msg.endX-msg.startX, msg.endY-msg.startY);
-        ctx.lineWidth="3";
-        ctx.strokeStyle="yellow";
+        ctx.lineWidth="5";
+        if(msg.name == 'Unknown'){
+            ctx.strokeStyle="red";
+        } else {
+            ctx.strokeStyle="green";
+        }
         ctx.stroke();
 
         // TODO: do this without setTimeout
@@ -96,25 +100,36 @@ $(function(){
         context.drawImage(video[0], 0, 0, 640, 480);
         
         // upload image
+        // $.ajax({
+        //     method: 'POST',
+        //     url: '/uploadImage',
+        //     // headers: {'X-CSRFToken':csrftoken},
+        //     data: {'image':canvas[0].toDataURL()}
+        // }).done(function(msg){
+        //     console.log('[done]:', msg);
+        //     $.ajax({
+        //         method: 'GET',
+        //         url: '/face_utils/identify_face',
+        //     }).done(function(msg){
+
+        //         // draw bounding box
+        //         console.log(msg);
+        //         drawFace(msg);
+
+        //     }).fail(function(msg){
+        //         console.log('[fail]:', msg);
+        //     });
+        // }).fail(function(msg){
+        //     console.log('[fail]:', msg);
+        // });
         $.ajax({
             method: 'POST',
-            url: '/uploadImage',
-            // headers: {'X-CSRFToken':csrftoken},
+            url: '/face_utils/identify_face',
             data: {'image':canvas[0].toDataURL()}
         }).done(function(msg){
             console.log('[done]:', msg);
-            $.ajax({
-                method: 'GET',
-                url: '/face_utils/identify_face',
-            }).done(function(msg){
-
-                // draw bounding box
-                console.log(msg);
-                drawFace(msg);
-
-            }).fail(function(msg){
-                console.log('[fail]:', msg);
-            });
+            // draw bounding box
+            drawFace(msg);
         }).fail(function(msg){
             console.log('[fail]:', msg);
         });
