@@ -9,4 +9,5 @@ urlpatterns = [
     path('new_member', views.new_member),
     path('recognize_face', views.recognize_face),
     path('get_members', views.get_members),
+    path('del_members', views.del_members),
 ]

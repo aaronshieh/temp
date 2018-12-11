@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+<style>
+
+.navbar{
+    background-color: rgba(0, 8, 46, 0.5);
+}
+
+#videoContainer {
+    margin: 0px auto;
+    width: 660px;
+    height: 500px;
+    border: 10px #333 solid;
+}
+
+#videoElement {
+    width: 640px;
+    height: 480px;
+}
+
+#photo {
+    border: 10px #333 solid;
+}
+
+.modal-dialog{
+    max-width:800px;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <br>
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4">
+            <form>
+                <div class="form-group">
+                    <label for="account">Account Name:</label>
+                    <input type="text" class="form-control" id="account" name="account" placeholder="account name">
+                </div>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#createFaceId">Create Face ID</button>
+            </form>
+            <br>
+        </div>
+        <div class="col-4">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col text-center">
+            <canvas id="photo" width="640" height="480"></canvas>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col text-center">
+            <button type="button" class="btn btn-primary" id="create">Create Account</button>
+            <br>
+        </div>
+    </div>
+      
+    <!-- Modal -->
+    <div class="modal fade" id="createFaceId" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createFaceIdLabel">Smile!</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col">
+                        <div id="videoContainer">
+                            <video autoplay="true" id="videoElement">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <button id="snap" class="btn btn-primary">Capture</button>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+    <br>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function(){
+    var video = $("#videoElement");
+    var canvas = $('#photo');
+    var context = canvas[0].getContext('2d');
+    var transferContainer = $('#createFaceId');
+    transferContainer.hide();
+
+    $('#createFaceId').on('shown.bs.modal', function(e){
+        if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({video: true})
+            .then(function(stream) {
+                video[0].srcObject = stream;
+                let {width, height} = stream.getTracks()[0].getSettings();
+                console.log(`Streaming video at: ${width}x${height}`); // 640x480
+            }).catch(function(error) {
+                console.log("Video error!");
+            });
+        }
+    });
+
+    // Snap
+    document.getElementById("snap").addEventListener("click", function snap() {
+        console.log('snap!');
+        context.drawImage(video[0], 0, 0, 640, 480);
+        $('#createFaceId').modal('hide');
+    });
+
+    $('#create').on('click', function(){
+        if ($('#account').val()){        
+            $.ajax({
+                method: 'POST',
+                url: '/face_utils/new_member',
+                data: {'image':canvas[0].toDataURL(),'name':$('#account').val()}
+            }).done(function(msg){
+                console.log("[DONE]", msg);
+                if (msg.result == 'error'){
+                    alert('error!');
+                    window.location.href = '/bank/create';
+                } else if (msg.result == 'success'){
+                    alert('account created!');
+                    window.location.href = '/bank/login';
+                } else {
+                    alert('account already in db');
+                    window.location.href = '/bank/create';
+                }
+            }).fail(function(msg){
+                console.log("[FAIL]", msg);
+            });
+        } else {
+            alert('must input name!');
+        }
+    });
+});
+</script>
+{% endblock %}

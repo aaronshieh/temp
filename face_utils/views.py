@@ -175,7 +175,6 @@ def identify_emotion(request):
         img = base64_to_nparray(imgString)
 
         path = 'emotion-recognition'
-        imagePath = 'cameraCapture.png'
 
         # TODO: find more efficient way to load model
         model = load_model(os.path.sep.join([path, 'model_20181130.h5']))
@@ -305,20 +304,34 @@ def add_to_embeddings(face_vector, name):
     }
     
     myMembers.insert_one(member)
-    # myMembers.delete_many({'name':'aaron'})
 
     print(f'added {name} to embeddings')
 
+@csrf_exempt
 def new_member(request):
-    print("[INFO] quantifying faces...")
-    from imutils import paths
-    imagePaths = list(paths.list_images(os.path.join(opencv_face_recognition, "extract")))
-    print(f"FOUND {len(imagePaths)} IMAGE(S):", imagePaths)
+    if request.method == 'POST':
+        account = request.POST['name']
+        photo = request.POST['image']
 
-    face_vector = get_face_embedding_vector(imagePaths)
-    add_to_embeddings(face_vector, 'lydia')
+        client = pymongo.MongoClient()
+        db = client.embeddings
+        myMembers = db.members
 
-    return HttpResponse(imagePaths)
+        account_ = ''
+        for name in myMembers.find({'name':account}):
+            account_ = name
+        
+        if account_ != '':
+            return JsonResponse({'result':'already in db'})
+        else:
+            try:
+                img = base64_to_nparray(photo)
+                face, startX, startY, endX, endY = extract_face(img)
+                face_vector = calc_face_embedding_vector(face)
+                add_to_embeddings(face_vector, account)
+                return JsonResponse({'result':'success'})
+            except:
+                return JsonResponse({'result':'error'})
 
 @csrf_exempt
 def recognize_face(request):
@@ -344,7 +357,25 @@ def recognize_face(request):
                     name = member['name']
             print("min dist.", l2_dist)
 
-            return HttpResponse(f"{name} found!")
+            if name == 'unknown':
+                response = {
+                    "result": "error"
+                }
+            else:
+                response = {
+                    "name": name,
+                    "startX": str(startX),
+                    "startY": str(startY),
+                    "endX": str(endX),
+                    "endY": str(endY),
+                    "result": "success"
+                }
+        except:
+            response = {
+                "result": "error"
+            }
+
+        return JsonResponse(response)
 
 def get_members(request):
     client = pymongo.MongoClient()
@@ -358,3 +389,10 @@ def get_members(request):
         members['names'].append(member['name'])
 
     return JsonResponse(members)
+
+def del_members(request):
+    client = pymongo.MongoClient()
+    db = client.embeddings
+    myMembers = db.members
+    
+    return JsonResponse({"result":myMembers.delete_many({}).deleted_count})

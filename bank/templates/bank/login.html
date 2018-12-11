@@ -41,7 +41,7 @@
     <br>
     <div class="row">
         <div class="col-12 text-center">
-            <button id="snap" class="btn btn-primary">LOGIN</button>
+            <button id="login" class="btn btn-primary">LOGIN</button>
         </div>
     </div>
 </div>
@@ -95,37 +95,15 @@ $(function(){
     }
 
     // Login button
-    document.getElementById("snap").addEventListener("click", function() {
+    document.getElementById("login").addEventListener("click", function() {
         canvas.attr("width", "640");
         canvas.attr("height", "480");
         context.drawImage(video[0], 0, 0, 640, 480);
         
-        // upload image
-        // $.ajax({
-        //     method: 'POST',
-        //     url: '/uploadImage',
-        //     // headers: {'X-CSRFToken':csrftoken},
-        //     data: {'image':canvas[0].toDataURL()}
-        // }).done(function(msg){
-        //     console.log('[done]:', msg);
-        //     $.ajax({
-        //         method: 'GET',
-        //         url: '/face_utils/identify_face',
-        //     }).done(function(msg){
-
-        //         // draw bounding box
-        //         console.log(msg);
-        //         drawFace(msg);
-
-        //     }).fail(function(msg){
-        //         console.log('[fail]:', msg);
-        //     });
-        // }).fail(function(msg){
-        //     console.log('[fail]:', msg);
-        // });
         $.ajax({
             method: 'POST',
-            url: '/face_utils/identify_face',
+            // url: '/face_utils/identify_face',
+            url: '/face_utils/recognize_face',
             data: {'image':canvas[0].toDataURL()}
         }).done(function(msg){
             console.log('[done]:', msg);
@@ -135,7 +113,6 @@ $(function(){
             } else {
                 alert("no face detected!");
             }
-            
         }).fail(function(msg){
             console.log('[fail]:', msg);
         });
