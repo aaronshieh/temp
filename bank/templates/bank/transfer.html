@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+<style>
+
+.navbar{
+    background-color: rgba(0, 8, 46, 0.5);
+}
+
+#videoContainer {
+    margin: 0px auto;
+    width: 660px;
+    height: 500px;
+    border: 10px #333 solid;
+}
+
+#videoElement {
+    width: 640px;
+    height: 480px;
+}
+
+#canvas {
+    border: 0px #333 solid;
+}
+
+.modal-dialog{
+    max-width:800px;
+}
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <br>
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4">
+            <form>
+                <div class="form-group">
+                    <label for="account">Account Number:</label>
+                    <input type="text" class="form-control" id="account" name="account" placeholder="account number">
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount:</label>
+                    <input type="text" class="form-control" id="amount" name="amount" placeholder="amount">
+                </div>
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#transferModal">Transfer!</button>
+            </form>
+        </div>
+        <div class="col-4"></div>
+    </div>
+      
+    <!-- Modal -->
+    <div class="modal fade" id="transferModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferModalLabel">Smile to confirm transfer!</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col">
+                        <div id="videoContainer">
+                            <video autoplay="true" id="videoElement">
+                            </video>
+                            <canvas id="canvas" width="0" height="0"></canvas>
+                        </div>
+                        <div id="transferContainer">
+                            <h1 class="display-4" id="transferResult">Transfer Successful!</h1>
+                            <table class="table table-bordered">
+                                <thead>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th>Account</th>
+                                        <td id="transferResultAccount">0123456789</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Amount</th>
+                                        <td id="transferResultAmount">3000</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <button id="snap" class="btn btn-primary">Verify</button>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+    <br>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(function(){
+    var video = $("#videoElement");
+    var canvas = $('#canvas');
+    canvas.hide();
+    var context = canvas[0].getContext('2d');
+    var transferContainer = $('#transferContainer');
+    transferContainer.hide();
+
+    $('#transferModal').on('shown.bs.modal', function(e){
+        if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({video: true})
+            .then(function(stream) {
+                video[0].srcObject = stream;
+                let {width, height} = stream.getTracks()[0].getSettings();
+                console.log(`Streaming video at: ${width}x${height}`); // 640x480
+            }).catch(function(error) {
+                console.log("Video error!");
+            });
+        }
+    });
+
+    function drawFace(msg){
+        video.hide();
+        canvas.show();
+        var ctx=canvas[0].getContext("2d");
+        // ctx.rect(msg.startX, msg.startY, msg.endX-msg.startX, msg.endY-msg.startY);
+        
+        let pi = Math.PI;
+        let radius = 50;
+        let X1 = parseInt(msg.startX);
+        let Y1 = parseInt(msg.startY);
+        let X2 = parseInt(msg.endX);
+        let Y2 = parseInt(msg.endY);
+        ctx.lineWidth="5";
+        if(msg.emotion == 'happy'){
+            ctx.strokeStyle="yellow";
+        } else {
+            ctx.strokeStyle="red";
+        }
+        ctx.beginPath();
+        ctx.arc(X1+radius, Y1+radius, radius, 1*pi, 1.5*pi);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(X2-radius, Y1+radius, radius, 1.5*pi, 2*pi);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(X1+radius, Y2-radius, radius, 0.5*pi, 1*pi);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(X2-radius, Y2-radius, radius, 0*pi, 0.5*pi);
+        ctx.stroke();
+
+        // TODO: do this without setTimeout
+        // t = setTimeout(function(){
+        //     if(msg.name == 'Unknown'){
+        //     alert("Unknown face detected, try again!");
+        //     video.show();
+        //     canvas.hide();
+        //     } else {
+        //         alert(`Welcome ${msg.name}!`);
+        //         window.location.href = 'main';
+        //     }
+        // }, 1000);
+    }
+
+    function transferSuccess(msg){
+        $('#transferModalLabel').text('Transfer successful');
+
+        drawFace(msg);
+
+        setTimeout(function(){
+            $('#videoContainer').hide();
+            $('#transferResult').text("Transfer successful!")
+                .css("color", "green");
+            $('#snap').text('Close')
+                .attr("data-dismiss", "modal");
+            $('#transferModal').on('hidden.bs.modal', function(e){
+                window.location.href = "main";
+            });
+            transferContainer.show();
+        }, 1000)
+    }
+
+    function transferFail(msg){
+        $('#transferModalLabel').text('Transfer failed');
+
+        drawFace(msg);
+
+        setTimeout(function(){
+            $('#videoContainer').hide();
+            $('#transferResult').text("Transfer failed!")
+                .css("color", "red");
+            $('#snap').text('Close')
+                .attr("data-dismiss", "modal");
+            $('#transferModal').on('hidden.bs.modal', function(e){
+                window.location.href = "main";
+            });
+            transferContainer.show();
+        }, 1000)
+    }
+
+    // Verify button
+    document.getElementById("snap").addEventListener("click", function snap() {
+        console.log('snap!');
+        $('#transferResultAccount').text($('#account').val());
+        $('#transferResultAmount').text($('#amount').val());
+
+        canvas.attr("width", "640");
+        canvas.attr("height", "480");
+        context.drawImage(video[0], 0, 0, 640, 480);
+        
+        $.ajax({
+            method: 'POST',
+            url: '/face_utils/identify_emotion',
+            data: {'image':canvas[0].toDataURL()}
+        }).done(function(msg){
+            console.log('[done]:', msg);
+            document.getElementById("snap").removeEventListener("click", snap);
+            alert(msg.emotion);
+            if(msg.emotion == 'happy'){
+                transferSuccess(msg);
+            } else {
+                transferFail(msg);
+            }
+        }).fail(function(msg){
+            console.log('[fail]:', msg);
+            transferFail();
+        });
+    });
+});
+</script>
+{% endblock %}

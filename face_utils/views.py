@@ -122,29 +122,37 @@ def identify_face(request):
         lePath = os.path.sep.join([path, 'output', 'le.pickle'])
         le = pickle.loads(open(lePath, "rb").read())
 
-        face, startX, startY, endX, endY = extract_face(img)
-        # construct a blob for the face ROI, then pass the blob
-        # through our face embedding model to obtain the 128-d
-        # quantification of the face
-        faceBlob = cv2.dnn.blobFromImage(face, 1.0 / 255, (96, 96),
-            (0, 0, 0), swapRB=True, crop=False)
-        embedder.setInput(faceBlob)
-        vec = embedder.forward()
+        try:
+            face, startX, startY, endX, endY = extract_face(img)
 
-        # perform classification to recognize the face
-        preds = recognizer.predict_proba(vec)[0]
-        j = np.argmax(preds)
-        proba = preds[j]
-        name = le.classes_[j]
+            # construct a blob for the face ROI, then pass the blob
+            # through our face embedding model to obtain the 128-d
+            # quantification of the face
+            faceBlob = cv2.dnn.blobFromImage(face, 1.0 / 255, (96, 96),
+                (0, 0, 0), swapRB=True, crop=False)
+            embedder.setInput(faceBlob)
+            vec = embedder.forward()
 
-        response = {
-            "name": name.title(),
-            "probability": proba,
-            "startX": str(startX),
-            "startY": str(startY),
-            "endX": str(endX),
-            "endY": str(endY)
-        }
+            # perform classification to recognize the face
+            preds = recognizer.predict_proba(vec)[0]
+            j = np.argmax(preds)
+            proba = preds[j]
+            name = le.classes_[j]
+
+            response = {
+                "name": name.title(),
+                "probability": proba,
+                "startX": str(startX),
+                "startY": str(startY),
+                "endX": str(endX),
+                "endY": str(endY),
+                "result": "success"
+            }
+
+        except:
+            response = {
+                "result": "error"
+            }
 
         return JsonResponse(response)
 
@@ -158,40 +166,51 @@ def identify_emotion(request):
         imagePath = 'cameraCapture.png'
 
         # TODO: find more efficient way to load model
-        model = load_model(os.path.sep.join([path, 'model_20181130.h5']))
+        model = load_model(os.path.sep.join([path, 'model-2.h5']))
 
         path_ = os.path.sep.join([path, 'test'])
 
-        face, startX, startY, endX, endY = extract_face(img, square=True)
-        
-        # test_file = 'test.png'
-        # test_path = os.path.join(path, 'test', test_file)
-        # cv2.imwrite(test_path, face)
+        try:
+            face, startX, startY, endX, endY = extract_face(img, square=True)
+            
+            # test_file = 'test.png'
+            # test_path = os.path.join(path, 'test', test_file)
+            # cv2.imwrite(test_path, face)
 
-        # img = cv2.imread(test_path, 0)
-        face = cv2.cvtColor(face, cv2.COLOR_RGB2GRAY)
-        # cv2.imshow("g", face)
-        face = cv2.resize(face, (100, 100))
-        # cv2.imshow("r", face)
-        face = cv2.equalizeHist(face)
-        # cv2.imshow("e", face)
-        face = face/255
+            # img = cv2.imread(test_path, 0)
+            face = cv2.cvtColor(face, cv2.COLOR_RGB2GRAY)
+            # cv2.imshow("g", face)
+            face = cv2.resize(face, (100, 100))
+            # cv2.imshow("r", face)
+            face = cv2.equalizeHist(face)
+            # cv2.imshow("e", face)
+            face = face/255
 
-        # cv2.waitKey()
-        # cv2.destroyAllWindows()
+            # cv2.waitKey()
+            # cv2.destroyAllWindows()
 
-        proba = model.predict(face.reshape(-1,100,100,1))
-        pred = np.argmax(model.predict(face.reshape(-1,100,100,1)))
+            proba = model.predict(face.reshape(-1,100,100,1))
+            pred = np.argmax(model.predict(face.reshape(-1,100,100,1)))
 
-        emotions = ['anger', 'happy', 'neutral', 'sad', 'surprise']
+            emotions = ['anger', 'happy', 'neutral', 'sad', 'surprise']
 
-        print("predicted:", emotions[pred])
-        print(proba)
+            print("predicted:", emotions[pred])
+            print(proba)
 
-        response = {
-            "emotion": emotions[pred]
-        }
+            response = {
+                "emotion": emotions[pred],
+                "startX": str(startX),
+                "startY": str(startY),
+                "endX": str(endX),
+                "endY": str(endY)
+            }
 
-        tf.keras.backend.clear_session()
+        except:
+            response = {
+                "emotion": "error"
+            }
+
+        finally:
+            tf.keras.backend.clear_session()
 
         return JsonResponse(response)

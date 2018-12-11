@@ -5,4 +5,6 @@ app_name = "bank"
 
 urlpatterns = [
     path('login', views.login),
+    path('main', views.main),
+    path('transfer', views.transfer),
 ]

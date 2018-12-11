@@ -89,6 +89,7 @@ $(function(){
             canvas.hide();
             } else {
                 alert(`Welcome ${msg.name}!`);
+                window.location.href = 'main';
             }
         }, 1000);
     }
@@ -128,8 +129,13 @@ $(function(){
             data: {'image':canvas[0].toDataURL()}
         }).done(function(msg){
             console.log('[done]:', msg);
-            // draw bounding box
-            drawFace(msg);
+            if(msg.result == 'success'){
+                // draw bounding box
+                drawFace(msg);
+            } else {
+                alert("no face detected!");
+            }
+            
         }).fail(function(msg){
             console.log('[fail]:', msg);
         });
