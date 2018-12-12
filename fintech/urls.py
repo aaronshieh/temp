@@ -30,4 +30,7 @@ urlpatterns = [
 
     # face_utils
     path('face_utils/', include('face_utils.urls')),
+
+    # security
+    path('security', include('security.urls')),
 ]

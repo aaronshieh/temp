@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'bitcoin',
     'bank',
     'face_utils',
+    'security',
 ]
 
 MIDDLEWARE = [
